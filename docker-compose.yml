@@ -1,0 +1,105 @@
+version: '3.9'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: nrip-postgres
+    environment:
+      POSTGRES_DB: nrip_db
+      POSTGRES_USER: nrip_user
+      POSTGRES_PASSWORD: nrip_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/migrations/001_initial_schema.sql:/docker-entrypoint-initdb.d/01_schema.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nrip_user -d nrip_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis
+  redis:
+    image: redis:7-alpine
+    container_name: nrip-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nrip-backend
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql+asyncpg://nrip_user:nrip_password@postgres:5432/nrip_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      APP_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./uploads:/app/uploads
+      - ./ai/models:/app/ai/models
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+
+  # Celery Worker
+  celery_worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nrip-celery-worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://nrip_user:nrip_password@postgres:5432/nrip_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      - backend
+      - redis
+    command: celery -A automation.tasks.celery_app worker --loglevel=info --concurrency=4
+
+  # Celery Beat (Scheduler)
+  celery_beat:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nrip-celery-beat
+    environment:
+      DATABASE_URL: postgresql+asyncpg://nrip_user:nrip_password@postgres:5432/nrip_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+    depends_on:
+      - celery_worker
+    command: celery -A automation.tasks.celery_app beat --loglevel=info
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nrip-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api/v1
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: nrip-network

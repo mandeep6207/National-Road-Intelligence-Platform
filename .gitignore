@@ -1,0 +1,9 @@
+dataset/
+runs/
+venv/
+node_modules/
+__pycache__/
+*.pt
+*.zip
+*.pth
+.env
