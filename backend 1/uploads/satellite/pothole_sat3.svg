@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 520">
+  <rect width="800" height="520" fill="#18374a"/>
+  <rect x="70" y="100" width="660" height="320" rx="28" fill="#d2c39f"/>
+  <rect x="120" y="140" width="560" height="240" rx="22" fill="#60666d"/>
+  <ellipse cx="390" cy="245" rx="70" ry="42" fill="#222831"/>
+  <ellipse cx="470" cy="300" rx="54" ry="32" fill="#2d3440"/>
+  <circle cx="230" cy="210" r="18" fill="#efc94c" opacity="0.7"/>
+  <circle cx="575" cy="195" r="12" fill="#efc94c" opacity="0.55"/>
+  <text x="74" y="68" fill="#ffffff" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="700">Satellite Scan: Visakhapatnam Coastline</text>
+  <text x="74" y="472" fill="#dceefe" font-family="Segoe UI, Arial, sans-serif" font-size="24">Severity LOW | Risk 42 | Source satellite</text>
+</svg>

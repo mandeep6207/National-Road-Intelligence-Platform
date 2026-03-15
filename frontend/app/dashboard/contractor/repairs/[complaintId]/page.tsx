@@ -3,9 +3,17 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
-import { useEffect, useMemo, useState, type ChangeEvent } from 'react'
+import { useEffect, useState, type ChangeEvent } from 'react'
 import { Upload } from 'lucide-react'
 import { useAdminControlCenter } from '@/components/admin/AdminControlCenterContext'
+import {
+  loadContractorTask,
+  startContractorRepairTask,
+  updateContractorRepairProgress,
+  completeContractorRepairTask,
+  type ContractorPortalTask,
+} from '@/lib/chhattisgarhContractorPortal'
+import { getCgReportsUpdateEventName } from '@/lib/chhattisgarhAuthorityData'
 
 const ContractorRepairsMap = dynamic(() => import('@/components/map/ContractorRepairsMap'), {
   ssr: false,
@@ -15,25 +23,32 @@ const ContractorRepairsMap = dynamic(() => import('@/components/map/ContractorRe
 export default function ContractorRepairDetailsPage() {
   const params = useParams<{ complaintId: string }>()
   const complaintId = Array.isArray(params.complaintId) ? params.complaintId[0] : params.complaintId
+  const { setNotice } = useAdminControlCenter()
 
-  const { complaints, startRepair, updateRepairProgress, submitRepairEvidence } = useAdminControlCenter()
-
-  const repair = useMemo(
-    () => complaints.find((item) => item.complaintId === complaintId) || null,
-    [complaints, complaintId]
-  )
-
+  const [repair, setRepair] = useState<ContractorPortalTask | null>(() => loadContractorTask(complaintId || ''))
   const [progressPercentage, setProgressPercentage] = useState(0)
   const [beforeImageName, setBeforeImageName] = useState('')
   const [afterImageName, setAfterImageName] = useState('')
   const [repairNotes, setRepairNotes] = useState('')
 
   useEffect(() => {
+    const refresh = () => {
+      setRepair(loadContractorTask(complaintId || ''))
+    }
+
+    refresh()
+    window.addEventListener(getCgReportsUpdateEventName(), refresh as EventListener)
+    return () => {
+      window.removeEventListener(getCgReportsUpdateEventName(), refresh as EventListener)
+    }
+  }, [complaintId])
+
+  useEffect(() => {
     if (!repair) return
     setProgressPercentage(repair.progressPercentage)
-    setBeforeImageName(repair.beforeRepairImageName)
-    setAfterImageName(repair.afterRepairImageName)
-    setRepairNotes(repair.repairNotes)
+    setBeforeImageName(repair.beforeRepairImageName || '')
+    setAfterImageName(repair.afterRepairImageName || '')
+    setRepairNotes(repair.repairNotes || '')
   }, [repair])
 
   function handleFilePick(setter: (value: string) => void) {
@@ -48,7 +63,7 @@ export default function ContractorRepairDetailsPage() {
       <div className="space-y-4">
         <h2 className="text-lg font-bold text-[#0d3b5c]">Repair task not found</h2>
         <Link href="/dashboard/contractor/assigned" className="text-sm font-semibold text-[#1f4e79] hover:text-[#0d3b5c]">
-          Return to assigned repairs
+          Return to repair queue
         </Link>
       </div>
     )
@@ -59,25 +74,29 @@ export default function ContractorRepairDetailsPage() {
       <section className="grid gap-6 xl:grid-cols-[1.35fr_1fr]">
         <div className="rounded-2xl border border-slate-200 bg-white p-4">
           <h2 className="text-base font-bold text-[#0d3b5c]">Repair Details</h2>
-          <div className="mt-4 grid gap-4 md:grid-cols-2 text-sm text-slate-700">
+          <div className="mt-4 grid gap-4 text-sm text-slate-700 md:grid-cols-2">
             <div><span className="font-semibold">Complaint ID:</span> {repair.complaintId}</div>
             <div><span className="font-semibold">Road Name:</span> {repair.roadName}</div>
             <div><span className="font-semibold">District:</span> {repair.district}</div>
-            <div><span className="font-semibold">Severity:</span> <span className="capitalize">{repair.severity}</span></div>
+            <div><span className="font-semibold">Severity:</span> {repair.severity}</div>
             <div><span className="font-semibold">Priority:</span> {repair.priority}</div>
-            <div><span className="font-semibold">Repair Deadline:</span> {repair.repairDeadline || 'Pending'}</div>
-            <div><span className="font-semibold">Assigned Contractor:</span> {repair.contractorName || 'Unassigned'}</div>
+            <div><span className="font-semibold">Repair Deadline:</span> {repair.repairDeadline}</div>
+            <div><span className="font-semibold">Assigned Contractor:</span> {repair.contractorName}</div>
             <div><span className="font-semibold">Status:</span> {repair.status}</div>
           </div>
         </div>
 
         <section className="rounded-2xl border border-slate-200 bg-[#f8fafc] p-4">
-          <h3 className="text-base font-bold text-[#0d3b5c]">Repair Progress</h3>
+          <h3 className="text-base font-bold text-[#0d3b5c]">Repair Status Update</h3>
           <div className="mt-4 space-y-4">
             <button
               type="button"
-              onClick={() => startRepair(repair.complaintId)}
-              className="w-full rounded-lg bg-[#0d3b5c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a304a]"
+              onClick={() => {
+                startContractorRepairTask(repair.complaintId)
+                setNotice(`Repair started for ${repair.complaintId}.`)
+              }}
+              disabled={repair.status !== 'ASSIGNED_TO_CONTRACTOR'}
+              className="w-full rounded-lg bg-[#0d3b5c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a304a] disabled:opacity-60"
             >
               Start Repair
             </button>
@@ -89,26 +108,46 @@ export default function ContractorRepairDetailsPage() {
               <input
                 type="range"
                 min={0}
-                max={99}
+                max={95}
                 step={5}
-                value={progressPercentage}
+                value={Math.min(progressPercentage, 95)}
                 onChange={(event) => setProgressPercentage(Number(event.target.value))}
+                disabled={repair.status === 'REPAIR_COMPLETED'}
                 className="w-full accent-[#1f4e79]"
               />
             </div>
             <button
               type="button"
-              onClick={() => updateRepairProgress(repair.complaintId, progressPercentage)}
-              className="w-full rounded-lg border border-[#1f4e79] px-4 py-2 text-sm font-semibold text-[#1f4e79] hover:bg-blue-50"
+              onClick={() => {
+                updateContractorRepairProgress(repair.complaintId, progressPercentage)
+                setNotice(`Repair progress updated for ${repair.complaintId}.`)
+              }}
+              disabled={repair.status === 'REPAIR_COMPLETED'}
+              className="w-full rounded-lg border border-[#1f4e79] px-4 py-2 text-sm font-semibold text-[#1f4e79] hover:bg-blue-50 disabled:opacity-60"
             >
               Update Repair Progress
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                completeContractorRepairTask(repair.complaintId, {
+                  beforeRepairImageName: beforeImageName,
+                  afterRepairImageName: afterImageName,
+                  repairNotes,
+                })
+                setNotice(`Repair completed for ${repair.complaintId}.`)
+              }}
+              disabled={repair.status === 'REPAIR_COMPLETED'}
+              className="w-full rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+            >
+              Mark Repair Complete
             </button>
           </div>
         </section>
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h3 className="mb-3 text-base font-bold text-[#0d3b5c]">Repair Location Map</h3>
+        <h3 className="mb-3 text-base font-bold text-[#0d3b5c]">Pothole Location Map</h3>
         <ContractorRepairsMap
           center={[repair.latitude, repair.longitude]}
           tasks={[repair]}
@@ -117,7 +156,7 @@ export default function ContractorRepairDetailsPage() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h3 className="text-base font-bold text-[#0d3b5c]">Upload Repair Evidence</h3>
+        <h3 className="text-base font-bold text-[#0d3b5c]">Repair Evidence</h3>
         <div className="mt-4 grid gap-6 xl:grid-cols-[1.2fr_1fr]">
           <div className="space-y-4">
             <div>
@@ -150,21 +189,6 @@ export default function ContractorRepairDetailsPage() {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
               />
             </div>
-
-            <button
-              type="button"
-              onClick={() =>
-                submitRepairEvidence(repair.complaintId, {
-                  beforeRepairImageName: beforeImageName,
-                  afterRepairImageName: afterImageName,
-                  repairNotes,
-                })
-              }
-              disabled={!beforeImageName || !afterImageName || !repairNotes.trim()}
-              className="w-full rounded-lg bg-[#0d3b5c] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#0a304a] disabled:opacity-60"
-            >
-              Submit Repair Completion
-            </button>
           </div>
 
           <aside className="rounded-2xl border border-slate-200 bg-[#f8fafc] p-4 text-sm text-slate-700">

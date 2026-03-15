@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
+import I18nProvider from '@/components/I18nProvider'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -16,14 +17,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body className={`${inter.className} bg-gray-50`}>
-        <Toaster
-          position="top-right"
-          toastOptions={{
-            style: { background: '#1A3A6B', color: '#fff', borderRadius: '8px' },
-            duration: 4000
-          }}
-        />
-        {children}
+        <I18nProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              style: { background: '#1A3A6B', color: '#fff', borderRadius: '8px' },
+              duration: 4000
+            }}
+          />
+          {children}
+        </I18nProvider>
       </body>
     </html>
   )

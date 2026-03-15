@@ -140,6 +140,9 @@ export const INDIA_AREA_DATA: Record<string, DistrictOption[]> = {
   Chhattisgarh: [
     { name: 'Raipur', center: [21.2514, 81.6296], roads: ['NH 53', 'GE Road', 'VIP Road', 'Ring Road'], pincodes: ['492001', '492004', '492006'] },
     { name: 'Bilaspur', center: [22.0796, 82.1391], roads: ['NH 130', 'Link Road', 'CMD Road', 'Seepat Road'], pincodes: ['495001', '495004', '495006'] },
+    { name: 'Durg', center: [21.1904, 81.2849], roads: ['NH 53', 'Station Road', 'Ganjpara Road', 'Padmanabhpur Road'], pincodes: ['491001', '491002', '491004'] },
+    { name: 'Korba', center: [22.3595, 82.7501], roads: ['NH 149B', 'Kosabadi Road', 'Transport Nagar Road', 'Sitamani Road'], pincodes: ['495677', '495678', '495679'] },
+    { name: 'Jagdalpur', center: [19.0748, 82.008], roads: ['NH 30', 'Dharampura Road', 'Sanjay Market Road', 'Geedam Road'], pincodes: ['494001', '494002', '494005'] },
   ],
   Goa: [
     { name: 'North Goa', center: [15.4909, 73.8278], roads: ['NH 66', 'MDR 1', 'Baga Road', 'Porvorim Road'], pincodes: ['403001', '403005', '403507'] },
@@ -702,7 +705,7 @@ export function AdminControlCenterProvider({ children, skipAuth = false }: { chi
         response = await fetch(`${API}/auth/login`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@nrip.gov.in', password: 'Admin@1234' }),
+          body: JSON.stringify({ email: 'admin@test.com', password: '1234' }),
         })
         data = await response.json().catch(() => ({}))
       }

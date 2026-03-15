@@ -4,7 +4,6 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
-  ClipboardList,
   Landmark,
   Lock,
   Shield,
@@ -15,30 +14,31 @@ import {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1'
 
 const ROLE_DASHBOARDS: Record<string, string> = {
-  super_admin: '/dashboard/admin',
-  government: '/dashboard/government',
+  admin: '/dashboard/admin',
+  authority: '/dashboard/government',
   contractor: '/dashboard/contractor',
   citizen: '/dashboard/citizen',
-  auditor: '/dashboard/auditor',
+  super_admin: '/dashboard/admin',
+  government: '/dashboard/government',
 }
 
 const ROLES = [
   {
-    role: 'super_admin',
-    label: 'Super Admin',
-    buttonLabel: 'Login as Super Admin',
-    email: 'admin@nrip.gov.in',
-    password: 'Admin@1234',
+    role: 'admin',
+    label: 'Admin',
+    buttonLabel: 'Login as Admin',
+    email: 'admin@test.com',
+    password: '1234',
     icon: Shield,
     iconWrap: 'bg-[#e6eef5] text-[#0d3b5c]',
     desc: 'Platform administration',
   },
   {
-    role: 'government',
-    label: 'Government Authority',
-    buttonLabel: 'Login as Government',
-    email: 'govt@nrip.gov.in',
-    password: 'Admin@1234',
+    role: 'authority',
+    label: 'Road Authority',
+    buttonLabel: 'Login as Authority',
+    email: 'authority@test.com',
+    password: '1234',
     icon: Landmark,
     iconWrap: 'bg-[#e8f1f8] text-[#1f4e79]',
     desc: 'Policy oversight',
@@ -47,8 +47,8 @@ const ROLES = [
     role: 'contractor',
     label: 'Contractor Management',
     buttonLabel: 'Login as Contractor',
-    email: 'contractor@nrip.gov.in',
-    password: 'Admin@1234',
+    email: 'contractor@test.com',
+    password: '1234',
     icon: Wrench,
     iconWrap: 'bg-[#fff3dc] text-[#b86b00]',
     desc: 'Repair execution',
@@ -57,21 +57,11 @@ const ROLES = [
     role: 'citizen',
     label: 'Citizen Portal',
     buttonLabel: 'Login as Citizen',
-    email: 'citizen@nrip.gov.in',
-    password: 'Admin@1234',
+    email: 'citizen@test.com',
+    password: '1234',
     icon: User,
     iconWrap: 'bg-[#e8f6ee] text-[#2f855a]',
     desc: 'Report road issues',
-  },
-  {
-    role: 'auditor',
-    label: 'Audit Authority',
-    buttonLabel: 'Login as Auditor',
-    email: 'auditor@nrip.gov.in',
-    password: 'Admin@1234',
-    icon: ClipboardList,
-    iconWrap: 'bg-[#eef1f7] text-[#415274]',
-    desc: 'Compliance monitoring',
   },
 ]
 
@@ -92,17 +82,25 @@ export default function LoginPage() {
         body: JSON.stringify({ email: roleEmail, password: rolePassword }),
       })
       const data = await res.json()
-      if (!res.ok) throw new Error(data.detail || 'Login failed')
+      const token = data?.access_token || data?.token
+      const role = data?.user?.role || data?.role
+      const userEmail = data?.user?.email || roleEmail
+      const userName = data?.user?.name || data?.full_name || 'User'
+      const userId = data?.user_id || userEmail
 
-      localStorage.setItem('nrip_token', data.access_token)
-      localStorage.setItem('nrip_role', data.role)
+      if (!res.ok || data?.success === false || !token || !role) {
+        throw new Error(data?.message || data?.detail || 'Login failed')
+      }
+
+      localStorage.setItem('nrip_token', token)
+      localStorage.setItem('nrip_role', role)
       localStorage.setItem('nrip_user', JSON.stringify({
-        id: data.user_id,
-        name: data.full_name,
-        role: data.role,
-        email: roleEmail,
+        id: userId,
+        name: userName,
+        role,
+        email: userEmail,
       }))
-      router.push(ROLE_DASHBOARDS[data.role] || '/dashboard/citizen')
+      router.push(ROLE_DASHBOARDS[role] || '/dashboard/citizen')
     } catch (err: any) {
       setError(err.message || 'Login failed. Is the backend running?')
       setLoadingRole(null)
@@ -186,21 +184,23 @@ export default function LoginPage() {
 
             <form onSubmit={handleManualLogin} className="mt-6 space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Email Address</label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700" data-i18n="email_address">Email Address</label>
                 <input
                   type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
+                  data-i18n-placeholder="enter_authorized_email"
                   placeholder="Enter authorized email"
                   className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition focus:border-[#1f4e79] focus:ring-2 focus:ring-[#1f4e79]/15"
                 />
               </div>
               <div>
-                <label className="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+                <label className="mb-2 block text-sm font-semibold text-slate-700" data-i18n="password">Password</label>
                 <input
                   type="password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
+                  data-i18n-placeholder="enter_password"
                   placeholder="Enter password"
                   className="w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder-slate-400 shadow-sm outline-none transition focus:border-[#1f4e79] focus:ring-2 focus:ring-[#1f4e79]/15"
                 />

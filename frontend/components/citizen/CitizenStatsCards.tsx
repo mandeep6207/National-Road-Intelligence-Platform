@@ -12,6 +12,9 @@ type StatCard = {
 }
 
 export default function CitizenStatsCards({ stats, loading = false }: CitizenStatsCardsProps) {
+  const reportingStreak = stats?.current_streak ?? 0
+  const citizenRank = (stats?.rank || '').trim() || 'Unranked Citizen'
+
   const cards: StatCard[] = [
     {
       label: 'Solved Complaints',
@@ -25,12 +28,12 @@ export default function CitizenStatsCards({ stats, loading = false }: CitizenSta
     },
     {
       label: 'Reporting Streak',
-      value: stats ? `${stats.current_streak} day${stats.current_streak === 1 ? '' : 's'}` : '0 days',
+      value: `${reportingStreak} day${reportingStreak === 1 ? '' : 's'}`,
       accent: 'text-sky-700',
     },
     {
       label: 'Citizen Rank',
-      value: stats?.rank ?? 'Beginner Reporter',
+      value: citizenRank,
       accent: 'text-[#0d3b5c]',
     },
   ]

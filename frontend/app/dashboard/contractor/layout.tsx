@@ -5,11 +5,12 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { AdminControlCenterProvider, useAdminControlCenter } from '@/components/admin/AdminControlCenterContext'
+import { resolveContractorIdentity } from '@/lib/chhattisgarhContractorPortal'
 import { BarChart3, ClipboardCheck, History, Home, MapPinned, Wrench } from 'lucide-react'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard/contractor', icon: Home },
-  { label: 'Assigned Repairs', href: '/dashboard/contractor/assigned', icon: ClipboardCheck },
+  { label: 'Repair Queue', href: '/dashboard/contractor/assigned', icon: ClipboardCheck },
   { label: 'Repair History', href: '/dashboard/contractor/history', icon: History },
   { label: 'Performance Analytics', href: '/dashboard/contractor/analytics', icon: BarChart3 },
 ]
@@ -17,19 +18,13 @@ const NAV_ITEMS = [
 function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { error, notice } = useAdminControlCenter()
-  const [userName, setUserName] = useState('Contractor Operations')
+  const [contractorName, setContractorName] = useState('Raipur RoadWorks Ltd')
+  const [region, setRegion] = useState('Chhattisgarh')
 
   useEffect(() => {
-    try {
-      const raw = window.localStorage.getItem('nrip_user')
-      if (!raw) return
-      const parsed = JSON.parse(raw) as { name?: string }
-      if (parsed.name) {
-        setUserName(parsed.name)
-      }
-    } catch {
-      setUserName('Contractor Operations')
-    }
+    const identity = resolveContractorIdentity()
+    setContractorName(identity.contractorName)
+    setRegion(identity.region)
   }, [])
 
   return (
@@ -37,11 +32,12 @@ function Shell({ children }: { children: ReactNode }) {
       <header className="bg-[#0d3b5c] text-white shadow-sm">
         <div className="mx-auto flex max-w-[1800px] flex-col gap-3 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-white/75">Government of India | Contractor Execution Workspace</p>
-            <h1 className="mt-1 text-xl font-bold">Road Repair Contractor Portal</h1>
+            <p className="text-xs uppercase tracking-[0.18em] text-white/75">Chhattisgarh | Contractor Execution Workspace</p>
+            <h1 className="mt-1 text-xl font-bold">Smart Road Monitoring Contractor Portal</h1>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <div className="rounded-lg bg-white/10 px-3 py-2 font-semibold">{userName}</div>
+          <div className="flex flex-wrap items-center gap-3 text-sm">
+            <div className="rounded-lg bg-white/10 px-3 py-2 font-semibold">{contractorName}</div>
+            <div className="rounded-lg bg-white/10 px-3 py-2 font-semibold">Region: {region}</div>
             <Link href="/dashboard/government" className="rounded-lg bg-white/15 px-3 py-2 font-semibold hover:bg-white/20">
               Authority View
             </Link>
@@ -94,7 +90,7 @@ function Shell({ children }: { children: ReactNode }) {
             </div>
             <p>Authority assigns repair</p>
             <p>Contractor starts work</p>
-            <p>Evidence uploaded</p>
+            <p>Repair progress updated</p>
             <p>Repair marked complete</p>
           </div>
 
@@ -103,10 +99,9 @@ function Shell({ children }: { children: ReactNode }) {
               <MapPinned className="h-4 w-4 text-[#1f4e79]" />
               <p className="font-semibold text-slate-700">Map Legend</p>
             </div>
-            <p>Red: urgent repair</p>
-            <p>Orange: medium / active repair</p>
-            <p>Blue: newly assigned repair</p>
-            <p>Green: completed repair</p>
+            <p>Red: active repair tasks</p>
+            <p>Orange: assigned repairs</p>
+            <p>Green: completed repairs</p>
           </div>
         </aside>
 

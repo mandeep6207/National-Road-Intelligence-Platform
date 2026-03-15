@@ -1,18 +1,31 @@
 'use client'
 
-import { useMemo } from 'react'
-import { useAdminControlCenter, type ComplaintRecord } from '@/components/admin/AdminControlCenterContext'
-
-function isCompletedStatus(status: ComplaintRecord['status']) {
-  return status === 'REPAIR_COMPLETED' || status === 'VERIFIED_BY_CITIZEN_AUDITOR' || status === 'CLOSED'
-}
+import { useEffect, useMemo, useState } from 'react'
+import {
+  loadContractorPortalSnapshot,
+  resolveContractorIdentity,
+  type ContractorPortalSnapshot,
+} from '@/lib/chhattisgarhContractorPortal'
+import { getCgReportsUpdateEventName } from '@/lib/chhattisgarhAuthorityData'
 
 export default function ContractorRepairHistoryPage() {
-  const { complaints } = useAdminControlCenter()
+  const [snapshot, setSnapshot] = useState<ContractorPortalSnapshot>(() => loadContractorPortalSnapshot())
+
+  useEffect(() => {
+    const refresh = () => {
+      setSnapshot(loadContractorPortalSnapshot(resolveContractorIdentity().contractorName))
+    }
+
+    refresh()
+    window.addEventListener(getCgReportsUpdateEventName(), refresh as EventListener)
+    return () => {
+      window.removeEventListener(getCgReportsUpdateEventName(), refresh as EventListener)
+    }
+  }, [])
 
   const completedRepairs = useMemo(
-    () => complaints.filter((item) => item.contractorName && isCompletedStatus(item.status)),
-    [complaints]
+    () => snapshot.tasks.filter((item) => item.status === 'REPAIR_COMPLETED'),
+    [snapshot.tasks]
   )
 
   return (
@@ -27,7 +40,7 @@ export default function ContractorRepairHistoryPage() {
           <table className="w-full text-sm">
             <thead className="bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
               <tr>
-                {['Complaint ID', 'Road', 'District', 'Completion Date', 'Status'].map((heading) => (
+                {['Complaint ID', 'Road Name', 'District', 'Completion Date', 'Status'].map((heading) => (
                   <th key={heading} className="px-4 py-3 text-left font-semibold">{heading}</th>
                 ))}
               </tr>
@@ -46,7 +59,7 @@ export default function ContractorRepairHistoryPage() {
                   <td className="px-4 py-3">{repair.roadName}</td>
                   <td className="px-4 py-3">{repair.district}</td>
                   <td className="px-4 py-3">{repair.completedAt ? new Date(repair.completedAt).toLocaleDateString('en-IN') : 'Pending'}</td>
-                  <td className="px-4 py-3 text-green-700">{repair.status}</td>
+                  <td className="px-4 py-3 font-semibold text-green-700">{repair.status}</td>
                 </tr>
               ))}
             </tbody>

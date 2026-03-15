@@ -1,79 +1,117 @@
 'use client'
 
-import { useMemo } from 'react'
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
-import { useAdminControlCenter, type ComplaintRecord } from '@/components/admin/AdminControlCenterContext'
+import { useEffect, useMemo, useState } from 'react'
+import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import {
+  loadContractorPortalSnapshot,
+  resolveContractorIdentity,
+  type ContractorPortalSnapshot,
+} from '@/lib/chhattisgarhContractorPortal'
+import { getCgReportsUpdateEventName } from '@/lib/chhattisgarhAuthorityData'
 
-function isCompletedStatus(status: ComplaintRecord['status']) {
-  return status === 'REPAIR_COMPLETED' || status === 'VERIFIED_BY_CITIZEN_AUDITOR' || status === 'CLOSED'
-}
-
-function getAverageRepairTimeDays(records: ComplaintRecord[]) {
-  const durations = records
-    .filter((item) => item.repairStartedAt && item.completedAt)
-    .map((item) => {
-      const started = new Date(item.repairStartedAt).getTime()
-      const completed = new Date(item.completedAt).getTime()
-      return Math.max((completed - started) / (1000 * 60 * 60 * 24), 0)
-    })
-
-  if (durations.length === 0) return 0
-  return durations.reduce((sum, value) => sum + value, 0) / durations.length
-}
+const PIE_COLORS = ['#16a34a', '#f59e0b', '#1f4e79']
 
 export default function ContractorAnalyticsPage() {
-  const { complaints } = useAdminControlCenter()
+  const [snapshot, setSnapshot] = useState<ContractorPortalSnapshot>(() => loadContractorPortalSnapshot())
 
-  const contractorRepairs = useMemo(() => complaints.filter((item) => item.contractorName), [complaints])
-  const completedRepairs = useMemo(() => contractorRepairs.filter((item) => isCompletedStatus(item.status)), [contractorRepairs])
-  const delayedRepairs = useMemo(
-    () => contractorRepairs.filter((item) => item.repairDeadline && !isCompletedStatus(item.status) && new Date(item.repairDeadline) < new Date()),
-    [contractorRepairs]
+  useEffect(() => {
+    const refresh = () => {
+      setSnapshot(loadContractorPortalSnapshot(resolveContractorIdentity().contractorName))
+    }
+
+    refresh()
+    window.addEventListener(getCgReportsUpdateEventName(), refresh as EventListener)
+    return () => {
+      window.removeEventListener(getCgReportsUpdateEventName(), refresh as EventListener)
+    }
+  }, [])
+
+  const completionRateData = useMemo(
+    () => [
+      { name: 'Completed', value: snapshot.summary.jobsCompleted },
+      { name: 'Pending', value: snapshot.summary.pendingRepairs },
+      { name: 'In Progress', value: snapshot.summary.workInProgress },
+    ],
+    [snapshot.summary.jobsCompleted, snapshot.summary.pendingRepairs, snapshot.summary.workInProgress]
   )
 
-  const completionRate = contractorRepairs.length === 0 ? 0 : Math.round((completedRepairs.length / contractorRepairs.length) * 100)
-  const averageRepairTime = getAverageRepairTimeDays(completedRepairs)
-  const qualityScore = completedRepairs.length === 0 ? 0 : Math.min(100, Math.round(82 + completionRate * 0.12 - delayedRepairs.length * 2))
+  const averageRepairTimeData = useMemo(
+    () => [
+      { name: 'Current Average', days: Number(snapshot.summary.averageRepairTimeDays.toFixed(1)) },
+      { name: 'Target Window', days: 2 },
+    ],
+    [snapshot.summary.averageRepairTimeDays]
+  )
 
-  const chartData = [
-    { metric: 'Completion Rate', value: completionRate },
-    { metric: 'Avg Repair Time', value: Number(averageRepairTime.toFixed(1)) },
-    { metric: 'Delayed Repairs', value: delayedRepairs.length },
-    { metric: 'Quality Score', value: qualityScore },
-  ]
+  const districtRepairDistribution = useMemo(() => {
+    const grouped = new Map<string, number>()
+    snapshot.tasks.forEach((task) => {
+      grouped.set(task.district, (grouped.get(task.district) || 0) + 1)
+    })
+    return Array.from(grouped.entries()).map(([district, jobs]) => ({ district, jobs }))
+  }, [snapshot.tasks])
 
   return (
     <div className="space-y-6">
       <section className="grid gap-4 md:grid-cols-4">
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Completion Rate</p>
-          <p className="mt-1 text-2xl font-extrabold text-[#0d3b5c]">{completionRate}%</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Total Jobs Assigned</p>
+          <p className="mt-1 text-2xl font-extrabold text-[#0d3b5c]">{snapshot.summary.totalJobsAssigned}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Jobs Completed</p>
+          <p className="mt-1 text-2xl font-extrabold text-[#16a34a]">{snapshot.summary.jobsCompleted}</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Pending Jobs</p>
+          <p className="mt-1 text-2xl font-extrabold text-[#b45309]">{snapshot.summary.pendingJobs}</p>
         </div>
         <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Average Repair Time</p>
-          <p className="mt-1 text-2xl font-extrabold text-[#1f4e79]">{averageRepairTime.toFixed(1)} days</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Delayed Repairs</p>
-          <p className="mt-1 text-2xl font-extrabold text-[#f59e0b]">{delayedRepairs.length}</p>
-        </div>
-        <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Quality Score</p>
-          <p className="mt-1 text-2xl font-extrabold text-[#16a34a]">{qualityScore}</p>
+          <p className="mt-1 text-2xl font-extrabold text-[#1f4e79]">{snapshot.summary.averageRepairTimeDays.toFixed(1)} days</p>
         </div>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-4">
-        <h2 className="mb-3 text-base font-bold text-[#0d3b5c]">Contractor Performance Analytics</h2>
-        <ResponsiveContainer width="100%" height={320}>
-          <BarChart data={chartData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-            <XAxis dataKey="metric" tick={{ fontSize: 12 }} />
-            <YAxis tick={{ fontSize: 12 }} />
-            <Tooltip />
-            <Bar dataKey="value" fill="#1f4e79" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+      <section className="grid gap-6 xl:grid-cols-3">
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-base font-bold text-[#0d3b5c]">Repair Completion Rate</h2>
+          <ResponsiveContainer width="100%" height={280}>
+            <PieChart>
+              <Pie data={completionRateData} dataKey="value" nameKey="name" outerRadius={88}>
+                {completionRateData.map((entry, index) => (
+                  <Cell key={`${entry.name}-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-base font-bold text-[#0d3b5c]">Average Repair Time</h2>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={averageRepairTimeData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip formatter={(value: number) => `${value} days`} />
+              <Bar dataKey="days" fill="#1f4e79" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white p-4">
+          <h2 className="mb-3 text-base font-bold text-[#0d3b5c]">District Repair Distribution</h2>
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={districtRepairDistribution}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+              <XAxis dataKey="district" tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12 }} />
+              <Tooltip formatter={(value: number) => `${value} jobs`} />
+              <Bar dataKey="jobs" fill="#16a34a" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
       </section>
     </div>
   )

@@ -1,7 +1,6 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
-import Image from 'next/image'
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import {
@@ -28,6 +27,13 @@ const NAV_ITEMS = [
   { label: 'Policy Dashboard', href: '/policy' },
   { label: 'Transparency Portal', href: '/transparency' },
   { label: 'Admin Console', href: '/dashboard/admin' },
+]
+
+const STATUS_RIBBON_ITEMS = [
+  'Today Potholes Detected: 42',
+  'Repairs Under Process: 18',
+  'Assigned to Contractor: 12',
+  'Completed Repairs Today: 9',
 ]
 
 const ANNOUNCEMENTS = [
@@ -121,7 +127,7 @@ function StatisticsSection() {
     { value: stats?.verified_repairs?.toLocaleString() || '892', label: 'Repairs Verified' },
     { value: stats?.blockchain_entries?.toLocaleString() || '15,643', label: 'Audit Entries' },
     { value: '42', label: 'District Cells Live' },
-    { value: '₹89 Cr', label: 'Budget Tracked' },
+    { value: 'INR 89 Cr', label: 'Budget Tracked' },
     { value: '99.2%', label: 'System Availability' },
   ]
 
@@ -155,46 +161,47 @@ export default function HomePage() {
     <div className="min-h-screen bg-[#f3f4f6] text-slate-900">
       <div className="bg-[#0d3b5c] text-[11px] text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-4 py-2 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3 uppercase tracking-[0.2em] text-white/85">
-            <div className="relative h-8 w-[150px] sm:w-[170px]">
-              <Image
-                src="/images/Navbar.png"
-                alt="National Road Intelligence Platform"
-                fill
-                sizes="(max-width: 640px) 150px, 170px"
-                className="object-contain object-left"
-                priority
-              />
-            </div>
-            <span className="hidden h-3 w-px bg-white/25 sm:block" />
-            <span className="text-white/70">National Infrastructure Monitoring Portal</span>
-          </div>
-          <div className="flex items-center gap-4 text-white/80">
-            <span>Language Selector</span>
-            <span>Accessibility Link</span>
+          <div className="flex items-center gap-3 text-white/85">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/90">Government Of Chhattisgarh</span>
+            <span className="hidden h-3 w-px bg-white/25 sm:inline-block" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/80">National Road Intelligence Platform</span>
           </div>
         </div>
       </div>
 
       <header className="border-b border-[#d7e0e8] bg-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4">
-            <div className="flex h-16 w-16 items-center justify-center rounded-full border-4 border-[#d6e2eb] bg-[#f3f4f6] text-sm font-bold text-[#0d3b5c] shadow-sm">
-              GOI
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="h-16 w-16 shrink-0 overflow-hidden rounded-full border-4 border-[#d6e2eb] bg-[#f3f4f6] shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://img.favpng.com/2/0/3/chhattisgarh-logo-chhattisgarh-state-emblem-1PK4zCEk.jpg"
+                alt="Chhattisgarh State Emblem"
+                className="h-full w-full object-cover"
+              />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-[#1f4e79]">Ministry Of Road Transport & Highways</p>
-              <h1 className="mt-1 text-2xl font-extrabold tracking-tight text-[#0d3b5c]">National Road Intelligence Platform</h1>
-              <p className="mt-1 text-sm text-slate-500">Digital governance interface for district monitoring, notices and citizen-facing services.</p>
+              <h1 className="mt-1 truncate text-2xl font-extrabold tracking-tight text-[#0d3b5c]">National Road Intelligence Platform</h1>
             </div>
           </div>
 
-          <Link
-            href="/login"
-            className="inline-flex items-center justify-center rounded-xl bg-[#f59e0b] px-6 py-3 text-sm font-bold text-[#0d3b5c] shadow-sm transition hover:bg-[#e28d08]"
-          >
-            Login To Portal
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/login"
+              className="inline-flex items-center justify-center rounded-xl bg-[#f59e0b] px-6 py-3 text-sm font-bold text-[#0d3b5c] shadow-sm transition hover:bg-[#e28d08]"
+            >
+              Login To Portal
+            </Link>
+            <div className="h-[60px] w-[190px] shrink-0 overflow-hidden rounded-lg border border-[#d6e2eb] bg-[#f3f4f6] px-2 shadow-sm">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/images/Navbar.png"
+                alt="National Road Intelligence Platform"
+                className="h-full w-full object-contain"
+              />
+            </div>
+          </div>
         </div>
       </header>
 
@@ -218,47 +225,75 @@ export default function HomePage() {
 
       <main>
         <section className="relative isolate overflow-hidden border-b border-[#d7e0e8] bg-[#0d3b5c]">
-          <div className="portal-hero-map absolute inset-0 pointer-events-none">
+          <div className="portal-hero-map pointer-events-none absolute inset-0">
             <HomeMap filter="all" onStatsUpdate={() => {}} onPotholeSelect={() => {}} />
           </div>
           <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(7,24,39,0.88)_0%,rgba(13,59,92,0.72)_45%,rgba(13,59,92,0.4)_100%)]" />
 
-          <div className="relative mx-auto flex min-h-[560px] max-w-7xl flex-col items-center justify-center px-4 py-20 text-center text-white sm:px-6 lg:px-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-sm">
-              <Building2 className="h-3.5 w-3.5" />
-              Smart Governance Interface
-            </div>
-            <h2 className="mt-6 max-w-4xl text-4xl font-black leading-tight md:text-6xl">{currentSlide.title}</h2>
-            <p className="mt-5 max-w-2xl text-base leading-7 text-white/85 md:text-lg">{currentSlide.sub}</p>
+          <div className="relative mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+            <div className="grid min-h-[56vh] max-h-[70vh] items-center gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <div className="text-left text-white">
+                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.2em] text-white/90 backdrop-blur-sm">
+                  <Building2 className="h-3.5 w-3.5" />
+                  Smart Governance Interface
+                </div>
+                <h2 className="mt-5 max-w-3xl text-4xl font-black leading-tight md:text-6xl">{currentSlide.title}</h2>
+                <p className="mt-4 max-w-2xl text-base leading-7 text-white/85 md:text-lg">{currentSlide.sub}</p>
 
-            <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/map"
-                className="inline-flex min-w-48 items-center justify-center rounded-xl bg-[#f59e0b] px-6 py-3.5 text-sm font-bold text-[#0d3b5c] shadow-lg shadow-black/10 transition hover:bg-[#e28d08]"
-              >
-                Open Live Map
-              </Link>
-              <Link
-                href="/login"
-                className="inline-flex min-w-48 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/15"
-              >
-                Access Dashboard
-              </Link>
-            </div>
+                <div className="mt-8 flex flex-wrap items-center gap-4">
+                  <Link
+                    href="/map"
+                    className="inline-flex min-w-48 items-center justify-center rounded-xl bg-[#f59e0b] px-6 py-3.5 text-sm font-bold text-[#0d3b5c] shadow-lg shadow-black/10 transition hover:bg-[#e28d08]"
+                  >
+                    Open Live Map
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex min-w-48 items-center justify-center rounded-xl border border-white/25 bg-white/10 px-6 py-3.5 text-sm font-bold text-white backdrop-blur-sm transition hover:bg-white/15"
+                  >
+                    Access Dashboard
+                  </Link>
+                </div>
 
-            <div className="mt-12 flex items-center justify-center gap-3">
-              {HERO_SLIDES.map((slide, index) => (
-                <button
-                  key={slide.title}
-                  type="button"
-                  aria-label={`Show slide ${index + 1}`}
-                  onClick={() => setHeroIdx(index)}
-                  className={`h-3 rounded-full transition-all ${index === heroIdx ? 'w-10 bg-[#f59e0b]' : 'w-3 bg-white/45 hover:bg-white/70'}`}
-                />
-              ))}
+                <div className="mt-10 flex items-center gap-3">
+                  {HERO_SLIDES.map((slide, index) => (
+                    <button
+                      key={slide.title}
+                      type="button"
+                      aria-label={`Show slide ${index + 1}`}
+                      onClick={() => setHeroIdx(index)}
+                      className={`h-3 rounded-full transition-all ${index === heroIdx ? 'w-10 bg-[#f59e0b]' : 'w-3 bg-white/45 hover:bg-white/70'}`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="hidden items-center justify-end md:flex lg:hidden">
+              </div>
             </div>
           </div>
         </section>
+
+        <section className="overflow-hidden border-b border-[#d7e0e8] bg-[#072b45] text-white">
+          <div
+            className="inline-flex min-w-full items-center gap-10 py-3 text-sm font-semibold"
+            style={{ animation: 'tickerScroll 32s linear infinite' }}
+          >
+            {[...STATUS_RIBBON_ITEMS, ...STATUS_RIBBON_ITEMS].map((item, index) => (
+              <div key={`${item}-${index}`} className="inline-flex items-center gap-3 whitespace-nowrap">
+                <span className="h-2 w-2 rounded-full bg-[#f59e0b]" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <style>{`
+          @keyframes tickerScroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+          }
+        `}</style>
 
         <StatisticsSection />
 
@@ -297,7 +332,7 @@ export default function HomePage() {
                     className={`flex items-center justify-between rounded-2xl px-4 py-3 text-sm font-semibold transition ${item.className}`}
                   >
                     <span>{item.label}</span>
-                    <span aria-hidden="true">→</span>
+                    <span aria-hidden="true">-&gt;</span>
                   </Link>
                 ))}
               </div>
@@ -378,3 +413,4 @@ export default function HomePage() {
     </div>
   )
 }
+

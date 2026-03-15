@@ -1,10 +1,4 @@
 {
-  "/page": "app/page.js",
-  "/(auth)/login/page": "app/(auth)/login/page.js",
-  "/dashboard/citizen/page": "app/dashboard/citizen/page.js",
-  "/dashboard/contractor/page": "app/dashboard/contractor/page.js",
-  "/dashboard/citizen/report/page": "app/dashboard/citizen/report/page.js",
-  "/dashboard/contractor/assigned/page": "app/dashboard/contractor/assigned/page.js",
-  "/dashboard/contractor/history/page": "app/dashboard/contractor/history/page.js",
-  "/dashboard/contractor/analytics/page": "app/dashboard/contractor/analytics/page.js"
+  "/not-found": "app/not-found.js",
+  "/page": "app/page.js"
 }

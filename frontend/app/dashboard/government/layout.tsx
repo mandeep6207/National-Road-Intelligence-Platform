@@ -1,21 +1,41 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { useEffect, type ReactNode } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AdminControlCenterProvider, useAdminControlCenter } from '@/components/admin/AdminControlCenterContext'
-import { Activity, BarChart3, Building2, FileSearch, Home, Settings } from 'lucide-react'
+import { Activity, Building2, FileSearch, Home, Users } from 'lucide-react'
+import { AUTHORITY_STATE } from '@/lib/chhattisgarhAuthorityData'
 
 const NAV_ITEMS = [
   { label: 'Dashboard', href: '/dashboard/government', icon: Home },
   { label: 'Detected Road Issues', href: '/dashboard/government/issues', icon: FileSearch },
-  { label: 'AI Insights', href: '/dashboard/government/insights', icon: BarChart3 },
-  { label: 'Workflow Settings', href: '/dashboard/government/settings', icon: Settings },
+  { label: 'Contractor Management', href: '/dashboard/government/contractor-management', icon: Users },
 ]
 
 function Shell({ children }: { children: ReactNode }) {
   const pathname = usePathname()
-  const { error, notice } = useAdminControlCenter()
+  const {
+    error,
+    notice,
+    selectedState,
+    selectedDistrict,
+    availableDistricts,
+    setSelectedState,
+    setSelectedDistrict,
+  } = useAdminControlCenter()
+
+  useEffect(() => {
+    if (selectedState !== AUTHORITY_STATE) {
+      setSelectedState(AUTHORITY_STATE)
+      return
+    }
+
+    const districtExists = availableDistricts.some((district) => district.name === selectedDistrict)
+    if (!districtExists && availableDistricts.length > 0) {
+      setSelectedDistrict(availableDistricts[0].name)
+    }
+  }, [availableDistricts, selectedDistrict, selectedState, setSelectedDistrict, setSelectedState])
 
   return (
     <div className="min-h-screen bg-[#f3f4f6] text-slate-800">
@@ -23,7 +43,7 @@ function Shell({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-[1800px] flex-col gap-3 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-white/75">Government Authority Workspace</p>
-            <h1 className="mt-1 text-xl font-bold">Road Governance Monitoring Dashboard</h1>
+            <h1 className="mt-1 text-xl font-bold">Chhattisgarh Road Governance Monitoring Dashboard</h1>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <Link href="/dashboard/admin" className="rounded-lg bg-white/15 px-3 py-2 font-semibold hover:bg-white/20">

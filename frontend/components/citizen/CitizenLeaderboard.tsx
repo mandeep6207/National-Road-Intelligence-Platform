@@ -6,6 +6,11 @@ type CitizenLeaderboardProps = {
 }
 
 export default function CitizenLeaderboard({ entries, loading = false }: CitizenLeaderboardProps) {
+  const placeholderRows: CitizenLeaderboardEntry[] = [
+    { rank: 1, name: 'Citizen A', reports: 0, tokens: 0 },
+    { rank: 2, name: 'Citizen B', reports: 0, tokens: 0 },
+  ]
+
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-4">
       <div className="mb-3 flex items-center justify-between gap-3">
@@ -34,13 +39,15 @@ export default function CitizenLeaderboard({ entries, loading = false }: Citizen
                 </tr>
               ))}
 
-            {!loading && entries.length === 0 && (
-              <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-sm text-slate-500">
-                  Leaderboard data is not available yet.
-                </td>
-              </tr>
-            )}
+            {!loading && entries.length === 0 &&
+              placeholderRows.map((entry) => (
+                <tr key={`placeholder-${entry.rank}`} className="bg-slate-50/70">
+                  <td className="px-4 py-3 font-semibold text-[#1f4e79]">#{entry.rank}</td>
+                  <td className="px-4 py-3">{entry.name}</td>
+                  <td className="px-4 py-3">{entry.reports}</td>
+                  <td className="px-4 py-3">{entry.tokens}</td>
+                </tr>
+              ))}
 
             {!loading &&
               entries.map((entry) => (

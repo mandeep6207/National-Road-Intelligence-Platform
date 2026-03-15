@@ -1,34 +1,47 @@
 'use client'
 
-import type { ComplaintRecord } from '@/components/admin/AdminControlCenterContext'
 import GovernanceSatelliteMap, { type GovernanceSeverity } from '@/components/map/GovernanceSatelliteMap'
+
+export interface CitizenMapIssue {
+  issueId: string
+  roadName: string
+  district: string
+  state: string
+  severity?: string
+  priority?: string
+  status: string
+  latitude: number
+  longitude: number
+  auditDecision?: string
+}
 
 interface CitizenIssuesMapProps {
   center: [number, number]
-  complaints: ComplaintRecord[]
+  issues: CitizenMapIssue[]
   focusToken: number
+  initialZoom?: number
 }
 
-function mapSeverity(complaint: ComplaintRecord): GovernanceSeverity {
-  if (complaint.status === 'CLOSED') return 'safe'
-  if (complaint.status === 'REPAIR_COMPLETED' || complaint.status === 'VERIFIED_BY_CITIZEN_AUDITOR') return 'repaired'
-  if (complaint.status === 'ESCALATED' || complaint.auditDecision === 'suspicious') return 'critical'
-  if (complaint.priority === 'HIGH' || complaint.severity === 'critical') return 'high'
-  if (complaint.status === 'REPAIR_IN_PROGRESS' || complaint.severity === 'medium') return 'moderate'
+function mapSeverity(issue: CitizenMapIssue): GovernanceSeverity {
+  if (issue.status === 'CLOSED') return 'safe'
+  if (issue.status === 'REPAIR_COMPLETED' || issue.status === 'VERIFIED_BY_CITIZEN_AUDITOR') return 'repaired'
+  if (issue.status === 'ESCALATED' || issue.auditDecision === 'suspicious') return 'critical'
+  if (issue.priority === 'HIGH' || issue.severity === 'critical') return 'high'
+  if (issue.status === 'REPAIR_IN_PROGRESS' || issue.severity === 'medium') return 'moderate'
   return 'low'
 }
 
-export default function CitizenIssuesMap({ center, complaints, focusToken }: CitizenIssuesMapProps) {
-  const mapIssues = complaints.map((complaint) => ({
-    issueId: complaint.complaintId,
-    roadName: complaint.roadName,
-    district: complaint.district,
-    state: complaint.state,
-    severity: mapSeverity(complaint),
-    priority: complaint.priority,
-    status: complaint.status,
-    latitude: complaint.latitude,
-    longitude: complaint.longitude,
+export default function CitizenIssuesMap({ center, issues, focusToken, initialZoom = 7 }: CitizenIssuesMapProps) {
+  const mapIssues = issues.map((issue) => ({
+    issueId: issue.issueId,
+    roadName: issue.roadName,
+    district: issue.district,
+    state: issue.state,
+    severity: mapSeverity(issue),
+    priority: issue.priority || 'LOW',
+    status: issue.status,
+    latitude: issue.latitude,
+    longitude: issue.longitude,
   }))
 
   return (
@@ -37,6 +50,15 @@ export default function CitizenIssuesMap({ center, complaints, focusToken }: Cit
       focusToken={focusToken}
       issues={mapIssues}
       heightClassName="h-[400px]"
+      initialZoom={initialZoom}
+      severityColors={{
+        critical: '#dc2626',
+        high: '#f97316',
+        moderate: '#facc15',
+        low: '#fde68a',
+        safe: '#fde68a',
+        repaired: '#16a34a',
+      }}
     />
   )
 }

@@ -2,9 +2,11 @@
 
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, BarChart3, MapPinned, ShieldCheck } from 'lucide-react'
+import ReportDetailModal, { type ReportDetailFallback } from '@/components/ReportDetailModal'
 import { useAdminControlCenter } from '@/components/admin/AdminControlCenterContext'
+import { fetchAdminDetectedIssues, resolveStoredImageUrl, type PotholeReportEntry, type ReportSourceFilter } from '@/lib/api'
 
 const AdminSimulationMap = dynamic(() => import('@/components/map/AdminSimulationMap'), {
   ssr: false,
@@ -22,8 +24,22 @@ function MetricCard({ label, value, href }: { label: string; value: number; href
   )
 }
 
+function simulationSeverityToReportSeverity(value: string) {
+  if (value === 'critical') return 'HIGH'
+  if (value === 'medium') return 'MEDIUM'
+  return 'LOW'
+}
+
+function priorityFromReport(report: PotholeReportEntry) {
+  return report.severity === 'HIGH' ? 'HIGH' : report.severity === 'MEDIUM' ? 'MEDIUM' : 'LOW'
+}
+
 export default function AdminDashboardPage() {
-  const [imagePreviewId, setImagePreviewId] = useState('')
+  const [previewReportId, setPreviewReportId] = useState<string | null>(null)
+  const [previewFallback, setPreviewFallback] = useState<ReportDetailFallback | null>(null)
+  const [snapshotReports, setSnapshotReports] = useState<PotholeReportEntry[]>([])
+  const [reportSourceFilter, setReportSourceFilter] = useState<ReportSourceFilter>('satellite')
+  const [snapshotError, setSnapshotError] = useState('')
 
   const {
     selectedState,
@@ -71,6 +87,119 @@ export default function AdminDashboardPage() {
   }, [issues.length, highPriorityRepairs])
 
   const recentRun = runHistory[runHistory.length - 1]
+
+  const simulationReports = useMemo<(PotholeReportEntry & { priority: string })[]>(
+    () =>
+      complaints
+        .filter((complaint) => complaint.reportSource === 'ai')
+        .map((complaint) => ({
+          id: complaint.complaintId,
+          complaint_id: complaint.complaintId,
+          type: 'pothole',
+          severity: simulationSeverityToReportSeverity(complaint.severity),
+          latitude: complaint.latitude,
+          longitude: complaint.longitude,
+          state: complaint.state,
+          district: complaint.district,
+          pincode: complaint.pincode,
+          road_name: complaint.roadName,
+          timestamp: complaint.createdAt,
+          status: complaint.status,
+          source: 'satellite',
+          image: resolveStoredImageUrl(complaint.issueImageName) || undefined,
+          priority: complaint.priority,
+        })),
+    [complaints]
+  )
+
+  const displayedSnapshotReports = reportSourceFilter === 'citizen' ? snapshotReports : simulationReports
+
+  const displayedTableRows = useMemo(
+    () =>
+      reportSourceFilter === 'citizen'
+        ? snapshotReports.map((report) => ({
+            id: report.id,
+            complaintId: report.complaint_id || report.id,
+            state: report.state,
+            district: report.district,
+            roadName: report.road_name || '—',
+            severity: report.severity,
+            priority: priorityFromReport(report),
+            fallback: report,
+          }))
+        : simulationReports.slice(0, 6).map((report) => ({
+            id: report.id,
+            complaintId: report.complaint_id || report.id,
+            state: report.state,
+            district: report.district,
+            roadName: report.road_name || '—',
+            severity: report.severity,
+            priority: report.priority,
+            fallback: report,
+          })),
+    [reportSourceFilter, simulationReports, snapshotReports]
+  )
+
+  useEffect(() => {
+    if (reportSourceFilter !== 'citizen') {
+      setSnapshotReports([])
+      setSnapshotError('')
+      return
+    }
+
+    let active = true
+    setSnapshotError('')
+
+    fetchAdminDetectedIssues('citizen')
+      .then((reports) => {
+        if (!active) return
+        setSnapshotReports(reports)
+      })
+      .catch((error: any) => {
+        if (!active) return
+        setSnapshotError(error?.message || 'Could not load saved pothole snapshots.')
+        setSnapshotReports([])
+      })
+
+    return () => {
+      active = false
+    }
+  }, [reportSourceFilter])
+
+  function openReportPreview(reportId: string, fallback: ReportDetailFallback | null = null) {
+    setPreviewReportId(reportId)
+    setPreviewFallback(fallback)
+  }
+
+  function openComplaintPreview(complaintId: string) {
+    const complaint = complaints.find((item) => item.complaintId === complaintId) || null
+    openReportPreview(
+      complaintId,
+      complaint
+        ? {
+            id: complaint.complaintId,
+            complaint_id: complaint.complaintId,
+            type: 'pothole',
+            severity: complaint.severity,
+            latitude: complaint.latitude,
+            longitude: complaint.longitude,
+            state: complaint.state,
+            district: complaint.district,
+            pincode: complaint.pincode,
+            road_name: complaint.roadName,
+            timestamp: complaint.createdAt,
+            status: complaint.status,
+            source: complaint.reportSource,
+            image: resolveStoredImageUrl(complaint.issueImageName),
+          }
+        : { id: complaintId, complaint_id: complaintId }
+    )
+  }
+
+  function closeReportPreview() {
+    setPreviewReportId(null)
+    setPreviewFallback(null)
+  }
 
   return (
     <div className="space-y-6">
@@ -139,6 +268,12 @@ export default function AdminDashboardPage() {
         <MetricCard label="High Priority Repairs" value={highPriorityRepairs} href="/dashboard/admin/insights" />
       </section>
 
+      {snapshotError && (
+        <section className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          {snapshotError}
+        </section>
+      )}
+
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex items-center gap-2">
           <BarChart3 className="h-5 w-5 text-[#1f4e79]" />
@@ -182,7 +317,7 @@ export default function AdminDashboardPage() {
             focusToken={mapFocusToken}
             issues={issues}
             complaints={complaints}
-            onViewImage={setImagePreviewId}
+            onViewImage={openComplaintPreview}
           />
         </div>
 
@@ -215,8 +350,76 @@ export default function AdminDashboardPage() {
       </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="mb-3 flex items-center justify-between gap-3">
+          <h3 className="text-base font-bold text-[#0d3b5c]">Super Admin Snapshot Feed</h3>
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            {reportSourceFilter === 'citizen' ? 'Saved pothole images from backend reports' : 'Satellite simulation results from the analysis engine'}
+          </span>
+        </div>
+
+        <div className="mb-4 inline-flex rounded-xl border border-slate-200 bg-slate-50 p-1 text-xs font-semibold">
+          <button
+            type="button"
+            onClick={() => setReportSourceFilter('satellite')}
+            className={`rounded-lg px-3 py-1.5 ${reportSourceFilter === 'satellite' ? 'bg-[#0d3b5c] text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+          >
+            Detected by Satellite
+          </button>
+          <button
+            type="button"
+            onClick={() => setReportSourceFilter('citizen')}
+            className={`rounded-lg px-3 py-1.5 ${reportSourceFilter === 'citizen' ? 'bg-[#0d3b5c] text-white' : 'text-slate-700 hover:bg-slate-100'}`}
+          >
+            Detected by Citizens
+          </button>
+        </div>
+
+        {displayedSnapshotReports.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-8 text-center text-sm text-slate-500">
+            {reportSourceFilter === 'citizen'
+              ? 'No saved citizen pothole snapshots are available yet.'
+              : 'Run road analysis to populate satellite simulation results.'}
+          </div>
+        ) : (
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {displayedSnapshotReports.map((report) => (
+              <article key={report.id} className="overflow-hidden rounded-2xl border border-slate-200 bg-slate-50">
+                <div className="h-44 bg-slate-200">
+                  {report.image ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={report.image} alt={`Snapshot ${report.id}`} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-sm text-slate-500">No snapshot available</div>
+                  )}
+                </div>
+                <div className="space-y-1 p-4 text-sm text-slate-700">
+                  <p className="font-mono text-xs text-[#1f4e79]">Complaint ID : {report.id}</p>
+                  <p><span className="font-semibold">Severity :</span> {report.severity}</p>
+                  <p><span className="font-semibold">Risk Score :</span> {report.risk_score ?? '—'}</p>
+                  <p><span className="font-semibold">Latitude :</span> {report.latitude}</p>
+                  <p><span className="font-semibold">Longitude :</span> {report.longitude}</p>
+                  <p><span className="font-semibold">State :</span> {report.state}</p>
+                  <p><span className="font-semibold">District :</span> {report.district}</p>
+                  <p><span className="font-semibold">Timestamp :</span> {new Date(report.timestamp).toLocaleString()}</p>
+                  <button
+                    type="button"
+                    onClick={() => openReportPreview(report.id, report)}
+                    className="mt-2 inline-flex rounded-lg border border-[#1f4e79] px-3 py-1.5 text-xs font-semibold text-[#1f4e79] hover:bg-blue-50"
+                  >
+                    Open full report
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-2xl border border-slate-200 bg-white p-4">
         <div className="mb-3 flex items-center justify-between gap-2">
-          <h3 className="text-base font-bold text-[#0d3b5c]">Detected Issues Snapshot</h3>
+          <h3 className="text-base font-bold text-[#0d3b5c]">
+            {reportSourceFilter === 'citizen' ? 'Citizen Reports Snapshot' : 'Detected Issues Snapshot'}
+          </h3>
           <Link href="/dashboard/admin/issues" className="text-sm font-semibold text-[#1f4e79] hover:text-[#0d3b5c]">View all</Link>
         </div>
 
@@ -230,21 +433,33 @@ export default function AdminDashboardPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {issues.length === 0 && (
+              {displayedTableRows.length === 0 && (
                 <tr>
                   <td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">
-                    Run road analysis to populate detected issues.
+                    {reportSourceFilter === 'citizen'
+                      ? 'No citizen pothole reports were returned by the backend.'
+                      : 'Run road analysis to populate detected issues.'}
                   </td>
                 </tr>
               )}
-              {issues.slice(0, 6).map((issue) => (
-                <tr key={issue.complaintId} className="hover:bg-slate-50">
-                  <td className="px-4 py-3 font-mono text-xs text-[#1f4e79]">{issue.complaintId}</td>
-                  <td className="px-4 py-3">{issue.state}</td>
-                  <td className="px-4 py-3">{issue.district}</td>
-                  <td className="px-4 py-3">{issue.roadName}</td>
-                  <td className="px-4 py-3 capitalize">{issue.severity}</td>
-                  <td className="px-4 py-3">{issue.priority}</td>
+              {displayedTableRows.map((row) => (
+                <tr
+                  key={row.id}
+                  className="cursor-pointer hover:bg-slate-50"
+                  onClick={() => {
+                    if (row.fallback) {
+                      openReportPreview(row.complaintId, row.fallback)
+                      return
+                    }
+                    openComplaintPreview(row.complaintId)
+                  }}
+                >
+                  <td className="px-4 py-3 font-mono text-xs text-[#1f4e79]">{row.complaintId}</td>
+                  <td className="px-4 py-3">{row.state}</td>
+                  <td className="px-4 py-3">{row.district}</td>
+                  <td className="px-4 py-3">{row.roadName}</td>
+                  <td className="px-4 py-3">{row.severity}</td>
+                  <td className="px-4 py-3">{row.priority}</td>
                 </tr>
               ))}
             </tbody>
@@ -252,25 +467,12 @@ export default function AdminDashboardPage() {
         </div>
       </section>
 
-      {imagePreviewId && (
-        <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-slate-900/65 p-4">
-          <div className="w-full max-w-xl rounded-2xl bg-white p-5 shadow-2xl">
-            <h4 className="text-lg font-bold text-[#0d3b5c]">Captured Image Preview</h4>
-            <p className="mt-1 text-sm text-slate-600">Complaint ID: {imagePreviewId}</p>
-            <div className="mt-4 flex h-56 items-center justify-center rounded-xl border border-slate-200 bg-slate-50 text-slate-500">
-              Satellite capture placeholder for road damage evidence
-            </div>
-            <div className="mt-4 flex justify-end">
-              <button
-                onClick={() => setImagePreviewId('')}
-                className="rounded-lg bg-[#0d3b5c] px-4 py-2 text-sm font-semibold text-white hover:bg-[#0a304a]"
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ReportDetailModal
+        reportId={previewReportId}
+        title="Captured Image Preview"
+        fallback={previewFallback}
+        onClose={closeReportPreview}
+      />
     </div>
   )
 }
