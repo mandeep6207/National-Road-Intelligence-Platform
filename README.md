@@ -224,12 +224,14 @@ TailwindCSS
 Leaflet Maps
 Chart.js
 
+
 Backend
 
 FastAPI
 Python 3.11
 SQLAlchemy ORM
 Alembic migrations
+
 
 Artificial Intelligence
 
@@ -243,16 +245,14 @@ Celery workers
 Redis message queue
 APScheduler jobs
 
-Database
 
+Database
 PostgreSQL 15
 
 Blockchain
-
 Polygon Testnet simulation
 
 Maps
-
 OpenStreetMap
 Sentinel-2 imagery
 
