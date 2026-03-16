@@ -1,4 +1,4 @@
-# 🇮🇳 National Road Intelligence Platform (NRIP)
+# National Road Intelligence Platform (NRIP)
 
 > **Powered by AI | Secured by Blockchain | Governed by Data**
 > Smart national infrastructure monitoring system for automated pothole detection, road damage analytics, repair lifecycle management, and transparent governance.
@@ -82,11 +82,9 @@ This pipeline demonstrates how **AI-driven governance systems could operate at n
 # 🧠 Core Features
 
 ## AI Pothole Detection
-
 The platform uses **YOLOv8 deep learning models** trained on road damage datasets.
 
 Capabilities:
-
 • Detect potholes in road video feeds
 • Classify damage severity (Low / Medium / High)
 • Calculate risk score
@@ -98,7 +96,6 @@ Capabilities:
 ## Intelligent Risk & Priority Engine
 
 Each detected pothole is analyzed based on:
-
 • Road importance
 • Traffic density
 • Damage size
@@ -113,7 +110,6 @@ Critical zones automatically escalate to authorities.
 ## Automated Complaint Generation
 
 Once potholes are detected:
-
 • Complaint ID generated automatically
 • State and district identified
 • Issue logged in monitoring dashboard
@@ -124,11 +120,9 @@ No manual complaint filing required.
 ---
 
 ## State Monitoring Dashboard
-
 The system simulates a **nationwide infrastructure monitoring dashboard**.
 
 Features:
-
 • State-wise complaint monitoring
 • Pothole density visualization
 • District-level breakdown
@@ -136,7 +130,6 @@ Features:
 • Priority escalation alerts
 
 Administrators can view:
-
 • number of potholes
 • pending repairs
 • repair progress
@@ -149,7 +142,6 @@ Administrators can view:
 Repair work orders are automatically assigned to contractors.
 
 Contractors can:
-
 • view assigned repair tasks
 • upload repair images/videos
 • submit repair completion proof
@@ -161,7 +153,6 @@ Contractors can:
 After repairs are uploaded:
 
 AI analyzes the repair evidence and determines:
-
 • whether pothole still exists
 • repair quality score
 • success or failure of repair
@@ -175,7 +166,6 @@ This prevents **fake repair reporting**.
 Every verified repair is recorded into a **tamper-resistant blockchain ledger**.
 
 This ensures:
-
 • public transparency
 • auditability
 • corruption prevention
@@ -185,7 +175,6 @@ This ensures:
 ## Citizen Transparency Portal
 
 Citizens can:
-
 • view complaints in their district
 • track repair status
 • verify completed repairs
@@ -217,44 +206,40 @@ Each component operates independently but integrates into the full monitoring pi
 # 💻 Technology Stack
 
 Frontend
-
-Next.js 14
-React 18
-TailwindCSS
-Leaflet Maps
-Chart.js
+- Next.js 14
+- React 18
+= TailwindCSS
+- Leaflet Maps
+- Chart.js
 
 
 Backend
-
-FastAPI
-Python 3.11
-SQLAlchemy ORM
-Alembic migrations
+- FastAPI
+- Python 3.11
+- SQLAlchemy ORM
+- Alembic migrations
 
 
 Artificial Intelligence
-
-YOLOv8
-PyTorch
-OpenCV
+- YOLOv8
+- PyTorch
+- OpenCV
 
 Automation
-
-Celery workers
-Redis message queue
-APScheduler jobs
+- Celery workers
+- Redis message queue
+- APScheduler jobs
 
 
 Database
-PostgreSQL 15
+- PostgreSQL 15
 
 Blockchain
-Polygon Testnet simulation
+- Polygon Testnet simulation
 
 Maps
-OpenStreetMap
-Sentinel-2 imagery
+- OpenStreetMap
+- Sentinel-2 imagery
 
 ---
 
@@ -291,13 +276,10 @@ This demonstrates a **complete automated road maintenance lifecycle**.
 # 📊 Road Health Score
 
 Road health for each state is calculated using:
-
 Road Health = 100 − (potholes / scanned road segments × 100)
-
 Higher score means better road condition.
 
 This allows government authorities to quickly identify:
-
 • critical repair zones
 • infrastructure decline
 • maintenance performance
@@ -307,7 +289,6 @@ This allows government authorities to quickly identify:
 # 🌍 Impact Potential
 
 If implemented nationally, NRIP could:
-
 • reduce road accidents caused by potholes
 • improve repair response time
 • prevent corruption in infrastructure projects
@@ -324,9 +305,9 @@ Developed as part of a technology innovation project presented at **E-Summit 202
 Team Members
 
 Mandeep Kumar
-Shyamali
-Srishti
-Roshan
+Shyamali Samant
+Srishti Anand
+Roshan Sahu
 
 Departments
 
