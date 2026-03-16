@@ -35,47 +35,50 @@ The result is a **data-driven infrastructure governance platform**.
 
 # ⚙️ 19-Stage Intelligent Infrastructure Pipeline
 
-NRIP simulates a full infrastructure intelligence lifecycle.
+NRIP simulates a full **AI-driven road infrastructure intelligence lifecycle**. The pipeline below represents how road damage is detected, analyzed, prioritized, repaired, verified, and recorded in a transparent governance system.
 
+```text
 Road Sensors / Dashcam / Satellite
-↓
+        ↓
 AI Detection Engine
-↓
+        ↓
 Damage Classification
-↓
+        ↓
 Risk Analysis Engine
-↓
+        ↓
 Priority Assignment Engine
-↓
+        ↓
 Automatic Complaint Generation
-↓
+        ↓
 State Admin Dashboard
-↓
+        ↓
 Authority Notification System
-↓
+        ↓
 Contractor Assignment
-↓
+        ↓
 Repair Execution
-↓
+        ↓
 Repair Evidence Upload
-↓
+        ↓
 AI Repair Verification
-↓
+        ↓
 Quality Score Evaluation
-↓
+        ↓
 Blockchain Ledger Record
-↓
+        ↓
 Public Transparency Portal
-↓
+        ↓
 Citizen Verification System
-↓
+        ↓
 Reputation & Accountability Engine
-↓
+        ↓
 Predictive Infrastructure Analytics
-↓
+        ↓
 Policy Intelligence Dashboard
+```
 
-This pipeline demonstrates how **AI-driven governance systems could operate at national scale**.
+This pipeline illustrates how **AI-powered infrastructure governance** can operate at national scale by combining automated detection, intelligent prioritization,
+
 
 ---
 
