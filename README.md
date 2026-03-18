@@ -1,6 +1,6 @@
 # 🇮🇳 National Road Intelligence Platform (NRIP)
 
-> **Powered by AI | Secured by Blockchain | Governed by Data**
+> **Powered by AI | Secured by Blockchain | Governed by Data |**
 > Smart national infrastructure monitoring system for automated pothole detection, road damage analytics, repair lifecycle management, and transparent governance.
 
 ---
