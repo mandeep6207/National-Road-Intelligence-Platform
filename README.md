@@ -7,7 +7,7 @@
 
 # 🏆 Achievement
 
-**1st Runner Up – E-Summit 2026, IIIT Naya Raipur**
+**1st Runner-up E-Summit 2026 Hackathon at IIIT Naya Raipur**
 
 This project was presented as a national-scale infrastructure intelligence platform during **E-Summit 2026 at IIIT Naya Raipur**.
 The platform demonstrates how **AI, automation, geospatial intelligence, and blockchain transparency** can transform how governments monitor and maintain road infrastructure.
