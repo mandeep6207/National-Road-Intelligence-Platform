@@ -194,7 +194,7 @@ The project is built using a **modular full-stack architecture**.
 nrip/
 
 frontend/      → Next.js + TailwindCSS + Leaflet dashboards
-backend/       → FastAPI APIs & data services
+backend 1/     → FastAPI APIs & data services
 ai/            → YOLOv8 pothole detection models
 automation/    → Celery + Redis background workers
 database/      → PostgreSQL schemas & migrations
